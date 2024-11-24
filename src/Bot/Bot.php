@@ -5,6 +5,7 @@ namespace App\Bot;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\RunningMode\Polling;
 use SergiX44\Nutgram\Configuration;
+use App\Commands;
 
 class Bot
 {
@@ -28,9 +29,7 @@ class Bot
     public function run()
     {
         $this->bot->setRunningMode(Polling::class);
-        $this->bot->onCommand('start', function (Nutgram $bot) {
-            $bot->sendMessage('Hi!');
-        });
+        $this->bot->onCommand('start', Commands\Start::class);
         $this->bot->run();
     }
 }
