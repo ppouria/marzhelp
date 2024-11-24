@@ -1,0 +1,5 @@
+{
+    "require": {
+        "nutgram/nutgram": "^4.30"
+    }
+}
