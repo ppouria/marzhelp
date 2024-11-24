@@ -1,5 +1,11 @@
 {
+    "name": "marzhelp/telegram-bot",
     "require": {
         "nutgram/nutgram": "^4.30"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
     }
 }
