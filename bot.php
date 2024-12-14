@@ -1951,7 +1951,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'limit_inbounds:') === 0) {
         logToFile('Handling limit_inbounds callback.');
         $adminId = intval(substr($data, strlen('limit_inbounds:')));
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
     
         if (!$adminInfo || !isset($adminInfo['username'])) {
             logToFile('Invalid admin info for limit_inbounds.');
