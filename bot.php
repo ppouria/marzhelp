@@ -754,7 +754,7 @@ function getAdminInfoText($adminInfo, $userId) {
     $separator = "➖➖➖➖➖➖➖➖➖➖"; 
     if ($langfa === 'fa') {
         $separator = "‏" . $separator . "‏"; 
-    } else {$separator = $separator;}
+    }
 
     $infoText = "🧸 **{$lang['userid']}:** `{$adminInfo['userid']}`\n";
     $infoText .= "🧸 **{$lang['username']}:** `{$adminInfo['username']}` {$statusText}\n";
@@ -831,7 +831,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'protocol_settings:') === 0) {
         $adminId = intval(substr($data, strlen('protocol_settings:')));
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -852,7 +852,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'show_restrictions:') === 0) {
         $adminId = intval(substr($data, strlen('show_restrictions:')));
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -921,7 +921,7 @@ function handleCallbackQuery($callback_query) {
             $marzbanConn->query($triggerBody);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1029,7 +1029,7 @@ function handleCallbackQuery($callback_query) {
             $marzbanConn->query($triggerBody);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1100,7 +1100,7 @@ function handleCallbackQuery($callback_query) {
             $marzbanConn->query("DROP TRIGGER IF EXISTS `$triggerName`");
             $marzbanConn->query($triggerBody);
         }
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1229,7 +1229,7 @@ function handleCallbackQuery($callback_query) {
             $marzbanConn->query($triggerBody);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1346,7 +1346,7 @@ function handleCallbackQuery($callback_query) {
             ]);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -1408,7 +1408,7 @@ function handleCallbackQuery($callback_query) {
             ]);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -1486,7 +1486,7 @@ function handleCallbackQuery($callback_query) {
                     'callback_data' => 'toggle_disable_inbound:' . $inbound
                 ];
             }
-    
+            $nextStepButton = '1';
             $keyboard = array_chunk($keyboard, 2);
             $keyboard[] = [
                 ['text' => $nextStepButton, 'callback_data' => 'confirm_disable_inbounds'],
@@ -1577,7 +1577,7 @@ function handleCallbackQuery($callback_query) {
     
             handleUserState('clear', $userId);
 
-            $adminInfo = getAdminInfo($adminId, $userId);
+            $adminInfo = getAdminInfo($adminId);
             $adminInfo['adminId'] = $adminId;
             $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -1600,7 +1600,7 @@ function handleCallbackQuery($callback_query) {
     }
     if (strpos($data, 'confirm_inbounds:') === 0) {
         $adminId = intval(substr($data, strlen('confirm_inbounds:')));
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1623,7 +1623,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'select_admin:') === 0) {
         $adminId = intval(substr($data, strlen('select_admin:')));
 
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1712,7 +1712,7 @@ function handleCallbackQuery($callback_query) {
     
             handleUserState('clear', $userId);
 
-            $adminInfo = getAdminInfo($adminId, $userId);
+            $adminInfo = getAdminInfo($adminId);
             $adminInfo['adminId'] = $adminId;
             $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -1779,7 +1779,7 @@ function handleCallbackQuery($callback_query) {
             $marzbanConn->query($triggerBody);
         }
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1810,7 +1810,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'back_to_admin_management:') === 0) {
         $adminId = intval(substr($data, strlen('back_to_admin_management:')));
 
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1879,7 +1879,7 @@ function handleCallbackQuery($callback_query) {
         $stmt->execute();
         $stmt->close();
 
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1915,7 +1915,7 @@ function handleCallbackQuery($callback_query) {
         $stmt->execute();
         $stmt->close();
 
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo) {
             sendRequest('sendMessage', [
                 'chat_id' => $chatId,
@@ -1941,21 +1941,11 @@ function handleCallbackQuery($callback_query) {
 
         return;
     }
-
-    function logToFile($message) {
-        $logFile = 'bot.log'; 
-        $timestamp = date('Y-m-d H:i:s');
-        $logMessage = "[$timestamp] $message" . PHP_EOL;  
-        file_put_contents($logFile, $logMessage, FILE_APPEND);
-    }
-    
     if (strpos($data, 'limit_inbounds:') === 0) {
-        logToFile('Handling limit_inbounds callback.');
         $adminId = intval(substr($data, strlen('limit_inbounds:')));
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
     
         if (!$adminInfo || !isset($adminInfo['username'])) {
-            logToFile('Invalid admin info for limit_inbounds.');
             sendRequest('answerCallbackQuery', [
                 'callback_query_id' => $callbackId, 
                 'text' => $lang['invalid_operation'],
@@ -1964,13 +1954,7 @@ function handleCallbackQuery($callback_query) {
             return;
         }
     
-        logToFile("Fetching inbounds for admin ID $adminId.");
         $inboundsResult = $marzbanConn->query("SELECT tag FROM inbounds");
-        if (!$inboundsResult) {
-            logToFile('Error fetching inbounds: ' . $marzbanConn->error);
-            return;
-        }
-    
         $inbounds = [];
         while ($row = $inboundsResult->fetch_assoc()) {
             $inbounds[] = $row['tag'];
@@ -1981,8 +1965,7 @@ function handleCallbackQuery($callback_query) {
     
         $eventExistsResult = $marzbanConn->query("SELECT EVENT_NAME FROM information_schema.EVENTS WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = '$eventName'");
         if ($eventExistsResult && $eventExistsResult->num_rows > 0) {
-            logToFile("Event $eventName exists. Fetching details.");
-            $eventResult = $marzbanConn->query("SHOW CREATE EVENT $eventName");
+            $eventResult = $marzbanConn->query("SHOW CREATE EVENT `$eventName`");
             if ($eventResult && $eventResult->num_rows > 0) {
                 $eventRow = $eventResult->fetch_assoc();
                 $eventBody = $eventRow['Create Event'];
@@ -1990,11 +1973,9 @@ function handleCallbackQuery($callback_query) {
                 if (isset($matches[1])) {
                     $selectedInbounds = $matches[1];
                 }
-            } else {
-                logToFile("Failed to fetch event body for $eventName: " . $marzbanConn->error);
             }
         } else {
-            logToFile("Event $eventName does not exist.");
+            $selectedInbounds = [];
         }
     
         $keyboard = [];
@@ -2009,7 +1990,7 @@ function handleCallbackQuery($callback_query) {
     
         $keyboard = array_chunk($keyboard, 2);
         $keyboard[] = [
-            ['text' => $nextStepButton, 'callback_data' => 'confirm_inbounds:' . $adminId],
+            ['text' => '1', 'callback_data' => 'confirm_inbounds:' . $adminId],
             ['text' => $lang['back'], 'callback_data' => 'back_to_admin_management:' . $adminId]
         ];
     
@@ -2019,17 +2000,13 @@ function handleCallbackQuery($callback_query) {
             'text' => $lang['limitInbounds_info'],
             'reply_markup' => ['inline_keyboard' => $keyboard]
         ]);
-        logToFile('Sent updated inline keyboard for inbounds.');
         return;
     }
-    
     if (strpos($data, 'toggle_inbound:') === 0) {
-        logToFile('Handling toggle_inbound callback.');
         list(, $adminId, $inboundTag) = explode(':', $data);
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo || !isset($adminInfo['username'])) {
-            logToFile('Invalid admin info for toggle_inbound.');
             sendRequest('answerCallbackQuery', [
                 'callback_query_id' => $callbackId,
                 'text' => $lang['invalid_operation'],
@@ -2039,31 +2016,31 @@ function handleCallbackQuery($callback_query) {
         }
     
         $eventName = "limit_inbound_for_admin_" . $adminInfo['username'];
-        $selectedInbounds = [];
     
         $eventExistsResult = $marzbanConn->query("SELECT EVENT_NAME FROM information_schema.EVENTS WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = '$eventName'");
+        $selectedInbounds = [];
         if ($eventExistsResult && $eventExistsResult->num_rows > 0) {
-            logToFile("Event $eventName exists. Fetching details.");
-            $eventResult = $marzbanConn->query("SHOW CREATE EVENT $eventName");
+            $eventResult = $marzbanConn->query("SHOW CREATE EVENT `$eventName`");
             if ($eventResult && $eventResult->num_rows > 0) {
                 $eventRow = $eventResult->fetch_assoc();
                 $eventBody = $eventRow['Create Event'];
                 preg_match_all("/SELECT '([^']+)' AS inbound_tag/", $eventBody, $matches);
                 $selectedInbounds = isset($matches[1]) ? $matches[1] : [];
-            }
-        }
     
-        if (in_array($inboundTag, $selectedInbounds)) {
-            logToFile("Removing inbound $inboundTag from selection.");
-            $selectedInbounds = array_diff($selectedInbounds, [$inboundTag]);
+                if (in_array($inboundTag, $selectedInbounds)) {
+                    $selectedInbounds = array_diff($selectedInbounds, [$inboundTag]);
+                } else {
+                    $selectedInbounds[] = $inboundTag;
+                }
+            } else {
+                $selectedInbounds = [$inboundTag];
+            }
         } else {
-            logToFile("Adding inbound $inboundTag to selection.");
-            $selectedInbounds[] = $inboundTag;
+            $selectedInbounds = [$inboundTag];
         }
     
         if (empty($selectedInbounds)) {
-            logToFile("No selected inbounds, dropping event $eventName.");
-            $marzbanConn->query("DROP EVENT IF EXISTS $eventName");
+            $marzbanConn->query("DROP EVENT IF EXISTS `$eventName`");
         } else {
             $adminUsername = $marzbanConn->real_escape_string($adminInfo['username']);
             $inboundSelects = array_map(function ($tag) {
@@ -2086,12 +2063,16 @@ function handleCallbackQuery($callback_query) {
                 AND eia.proxy_id IS NULL;
             ";
     
-            logToFile("Recreating event $eventName with updated inbounds.");
-            $marzbanConn->query("DROP EVENT IF EXISTS $eventName");
-            $marzbanConn->query("CREATE EVENT $eventName ON SCHEDULE EVERY 1 SECOND DO $eventBody");
+            $marzbanConn->query("DROP EVENT IF EXISTS `$eventName`");
+    
+            $marzbanConn->query("
+                CREATE EVENT `$eventName`
+                ON SCHEDULE EVERY 1 SECOND
+                DO
+                $eventBody
+            ");
         }
     
-        logToFile("Fetching updated inbounds list.");
         $inboundsResult = $marzbanConn->query("SELECT tag FROM inbounds");
         $inbounds = [];
         while ($row = $inboundsResult->fetch_assoc()) {
@@ -2110,7 +2091,7 @@ function handleCallbackQuery($callback_query) {
     
         $keyboard = array_chunk($keyboard, 2);
         $keyboard[] = [
-            ['text' => $nextStepButton, 'callback_data' => 'confirm_inbounds:' . $adminId],
+            ['text' => '1', 'callback_data' => 'confirm_inbounds:' . $adminId],
             ['text' => $lang['back'], 'callback_data' => 'back_to_admin_management:' . $adminId]
         ];
     
@@ -2125,7 +2106,8 @@ function handleCallbackQuery($callback_query) {
         $adminId = intval(substr($data, strlen('add_protocol:')));
         sendRequest('editMessageText', [
             'chat_id' => $chatId,
-            'message_id' =ng['add_protocol_prompt'],
+            'message_id' => $messageId,
+            'text' => $lang['add_protocol_prompt'],
             'reply_markup' => getProtocolSelectionKeyboard($adminId, 'select_add_protocol', $userId)
         ]);
         return;
@@ -2194,7 +2176,7 @@ function handleCallbackQuery($callback_query) {
     
         $marzbanConn->query("SET foreign_key_checks = 1");
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -2259,7 +2241,7 @@ function handleCallbackQuery($callback_query) {
     
         $marzbanConn->query("SET foreign_key_checks = 1");
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -2344,7 +2326,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'set_sudo_yes:') === 0) {
         $adminId = intval(substr($data, strlen('set_sudo_yes:')));
         $marzbanConn->query("UPDATE admins SET is_sudo = 1 WHERE id = '$adminId'");
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
         sendRequest('editMessageText', [
@@ -2359,7 +2341,7 @@ function handleCallbackQuery($callback_query) {
     if (strpos($data, 'set_sudo_no:') === 0) {
         $adminId = intval(substr($data, strlen('set_sudo_no:')));
         $marzbanConn->query("UPDATE admins SET is_sudo = 0 WHERE id = '$adminId'");
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         $adminInfo['adminId'] = $adminId;
         $infoText = getAdminInfoText($adminInfo, $userId);
         sendRequest('editMessageText', [
@@ -3160,7 +3142,7 @@ function handleCallbackQuery($callback_query) {
                         'text' => $lang['data_limit_added']
                     ]);
     
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -3205,7 +3187,7 @@ function handleCallbackQuery($callback_query) {
                         'text' => $lang['data_limit_subtracted']
                     ]);
     
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -3237,7 +3219,7 @@ function handleCallbackQuery($callback_query) {
                     $stmt->bind_param("iii", $adminId, $userLimit, $userLimit);
                     $stmt->execute();
                     $stmt->close();
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
 
@@ -3293,7 +3275,7 @@ function handleCallbackQuery($callback_query) {
                         ]);
                     }
     
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -3345,7 +3327,7 @@ function handleCallbackQuery($callback_query) {
                         ]);
                     }
     
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -3389,7 +3371,7 @@ function handleCallbackQuery($callback_query) {
                         'text' => $lang['setNewTraffic_success']
                     ]);
             
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
             
@@ -3432,7 +3414,7 @@ function handleCallbackQuery($callback_query) {
                         'text' => $lang['setNewExpiry_success']
                     ]);
     
-                    $adminInfo = getAdminInfo($adminId, $userId);
+                    $adminInfo = getAdminInfo($adminId);
                     $adminInfo['adminId'] = $adminId;
                     $infoText = getAdminInfoText($adminInfo, $userId);
     
@@ -3473,7 +3455,7 @@ function handleCallbackQuery($callback_query) {
                 'chat_id' => $chatId,
                 'text' => $lang['password_changed']
             ]);
-            $adminInfo = getAdminInfo($adminId, $userId);
+            $adminInfo = getAdminInfo($adminId);
             $adminInfo['adminId'] = $adminId;
             $infoText = getAdminInfoText($adminInfo, $userId);
             sendRequest('sendMessage', [
@@ -3504,7 +3486,7 @@ function handleCallbackQuery($callback_query) {
                     'chat_id' => $chatId,
                     'text' => $lang['telegram_id_changed']
                 ]);
-                $adminInfo = getAdminInfo($adminId, $userId);
+                $adminInfo = getAdminInfo($adminId);
                 $adminInfo['adminId'] = $adminId;
                 $infoText = getAdminInfoText($adminInfo, $userId);
                 sendRequest('sendMessage', [
@@ -3541,7 +3523,7 @@ function handleCallbackQuery($callback_query) {
                 'chat_id' => $chatId,
                 'text' => $lang['username_changed']
             ]);
-            $adminInfo = getAdminInfo($adminId, $userId);
+            $adminInfo = getAdminInfo($adminId);
             $adminInfo['adminId'] = $adminId;
             $infoText = getAdminInfoText($adminInfo, $userId);
             sendRequest('sendMessage', [
