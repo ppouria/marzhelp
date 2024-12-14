@@ -2026,7 +2026,7 @@ function handleCallbackQuery($callback_query) {
         logToFile('Handling toggle_inbound callback.');
         list(, $adminId, $inboundTag) = explode(':', $data);
     
-        $adminInfo = getAdminInfo($adminId, $userId);
+        $adminInfo = getAdminInfo($adminId);
         if (!$adminInfo || !isset($adminInfo['username'])) {
             logToFile('Invalid admin info for toggle_inbound.');
             sendRequest('answerCallbackQuery', [
