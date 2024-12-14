@@ -1941,11 +1941,21 @@ function handleCallbackQuery($callback_query) {
 
         return;
     }
+
+    function logToFile($message) {
+        $logFile = 'bot.log'; 
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[$timestamp] $message" . PHP_EOL;  
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+    }
+    
     if (strpos($data, 'limit_inbounds:') === 0) {
+        logToFile('Handling limit_inbounds callback.');
         $adminId = intval(substr($data, strlen('limit_inbounds:')));
         $adminInfo = getAdminInfo($adminId, $userId);
     
         if (!$adminInfo || !isset($adminInfo['username'])) {
+            logToFile('Invalid admin info for limit_inbounds.');
             sendRequest('answerCallbackQuery', [
                 'callback_query_id' => $callbackId, 
                 'text' => $lang['invalid_operation'],
@@ -1954,7 +1964,13 @@ function handleCallbackQuery($callback_query) {
             return;
         }
     
+        logToFile("Fetching inbounds for admin ID $adminId.");
         $inboundsResult = $marzbanConn->query("SELECT tag FROM inbounds");
+        if (!$inboundsResult) {
+            logToFile('Error fetching inbounds: ' . $marzbanConn->error);
+            return;
+        }
+    
         $inbounds = [];
         while ($row = $inboundsResult->fetch_assoc()) {
             $inbounds[] = $row['tag'];
@@ -1965,7 +1981,8 @@ function handleCallbackQuery($callback_query) {
     
         $eventExistsResult = $marzbanConn->query("SELECT EVENT_NAME FROM information_schema.EVENTS WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = '$eventName'");
         if ($eventExistsResult && $eventExistsResult->num_rows > 0) {
-            $eventResult = $marzbanConn->query("SHOW CREATE EVENT `$eventName`");
+            logToFile("Event $eventName exists. Fetching details.");
+            $eventResult = $marzbanConn->query("SHOW CREATE EVENT $eventName");
             if ($eventResult && $eventResult->num_rows > 0) {
                 $eventRow = $eventResult->fetch_assoc();
                 $eventBody = $eventRow['Create Event'];
@@ -1973,9 +1990,11 @@ function handleCallbackQuery($callback_query) {
                 if (isset($matches[1])) {
                     $selectedInbounds = $matches[1];
                 }
+            } else {
+                logToFile("Failed to fetch event body for $eventName: " . $marzbanConn->error);
             }
         } else {
-            $selectedInbounds = [];
+            logToFile("Event $eventName does not exist.");
         }
     
         $keyboard = [];
@@ -2000,13 +2019,17 @@ function handleCallbackQuery($callback_query) {
             'text' => $lang['limitInbounds_info'],
             'reply_markup' => ['inline_keyboard' => $keyboard]
         ]);
+        logToFile('Sent updated inline keyboard for inbounds.');
         return;
     }
+    
     if (strpos($data, 'toggle_inbound:') === 0) {
+        logToFile('Handling toggle_inbound callback.');
         list(, $adminId, $inboundTag) = explode(':', $data);
     
         $adminInfo = getAdminInfo($adminId, $userId);
         if (!$adminInfo || !isset($adminInfo['username'])) {
+            logToFile('Invalid admin info for toggle_inbound.');
             sendRequest('answerCallbackQuery', [
                 'callback_query_id' => $callbackId,
                 'text' => $lang['invalid_operation'],
@@ -2016,31 +2039,31 @@ function handleCallbackQuery($callback_query) {
         }
     
         $eventName = "limit_inbound_for_admin_" . $adminInfo['username'];
+        $selectedInbounds = [];
     
         $eventExistsResult = $marzbanConn->query("SELECT EVENT_NAME FROM information_schema.EVENTS WHERE EVENT_SCHEMA = DATABASE() AND EVENT_NAME = '$eventName'");
-        $selectedInbounds = [];
         if ($eventExistsResult && $eventExistsResult->num_rows > 0) {
-            $eventResult = $marzbanConn->query("SHOW CREATE EVENT `$eventName`");
+            logToFile("Event $eventName exists. Fetching details.");
+            $eventResult = $marzbanConn->query("SHOW CREATE EVENT $eventName");
             if ($eventResult && $eventResult->num_rows > 0) {
                 $eventRow = $eventResult->fetch_assoc();
                 $eventBody = $eventRow['Create Event'];
                 preg_match_all("/SELECT '([^']+)' AS inbound_tag/", $eventBody, $matches);
                 $selectedInbounds = isset($matches[1]) ? $matches[1] : [];
-    
-                if (in_array($inboundTag, $selectedInbounds)) {
-                    $selectedInbounds = array_diff($selectedInbounds, [$inboundTag]);
-                } else {
-                    $selectedInbounds[] = $inboundTag;
-                }
-            } else {
-                $selectedInbounds = [$inboundTag];
             }
+        }
+    
+        if (in_array($inboundTag, $selectedInbounds)) {
+            logToFile("Removing inbound $inboundTag from selection.");
+            $selectedInbounds = array_diff($selectedInbounds, [$inboundTag]);
         } else {
-            $selectedInbounds = [$inboundTag];
+            logToFile("Adding inbound $inboundTag to selection.");
+            $selectedInbounds[] = $inboundTag;
         }
     
         if (empty($selectedInbounds)) {
-            $marzbanConn->query("DROP EVENT IF EXISTS `$eventName`");
+            logToFile("No selected inbounds, dropping event $eventName.");
+            $marzbanConn->query("DROP EVENT IF EXISTS $eventName");
         } else {
             $adminUsername = $marzbanConn->real_escape_string($adminInfo['username']);
             $inboundSelects = array_map(function ($tag) {
@@ -2063,16 +2086,12 @@ function handleCallbackQuery($callback_query) {
                 AND eia.proxy_id IS NULL;
             ";
     
-            $marzbanConn->query("DROP EVENT IF EXISTS `$eventName`");
-    
-            $marzbanConn->query("
-                CREATE EVENT `$eventName`
-                ON SCHEDULE EVERY 1 SECOND
-                DO
-                $eventBody
-            ");
+            logToFile("Recreating event $eventName with updated inbounds.");
+            $marzbanConn->query("DROP EVENT IF EXISTS $eventName");
+            $marzbanConn->query("CREATE EVENT $eventName ON SCHEDULE EVERY 1 SECOND DO $eventBody");
         }
     
+        logToFile("Fetching updated inbounds list.");
         $inboundsResult = $marzbanConn->query("SELECT tag FROM inbounds");
         $inbounds = [];
         while ($row = $inboundsResult->fetch_assoc()) {
@@ -2106,8 +2125,7 @@ function handleCallbackQuery($callback_query) {
         $adminId = intval(substr($data, strlen('add_protocol:')));
         sendRequest('editMessageText', [
             'chat_id' => $chatId,
-            'message_id' => $messageId,
-            'text' => $lang['add_protocol_prompt'],
+            'message_id' =ng['add_protocol_prompt'],
             'reply_markup' => getProtocolSelectionKeyboard($adminId, 'select_add_protocol', $userId)
         ]);
         return;
