@@ -611,7 +611,7 @@ class PanelManager {
     }
 
     private function createTrafficTriggers() {
-        $stmt = $this->dbBot->prepare("SELECT admin_id, calculate_volume, total_traffic FROM admin_settings");
+        $stmt = $this->dbBot->prepare("SELECT admin_id, calculate_volume, total_traffic FROM admin_settings WHERE total_traffic IS NOT NULL AND total_traffic > 0");
         $stmt->execute();
         $result = $stmt->get_result();
         $admins = [];
@@ -622,12 +622,12 @@ class PanelManager {
             ];
         }
         $stmt->close();
-    
+
         $triggerNames = [
             'prevent_insert_traffic' => 'INSERT',
             'prevent_update_traffic' => 'UPDATE'
         ];
-    
+
         foreach ($triggerNames as $triggerName => $actionType) {
             $existingAdminIds = [];
             $triggerCheck = $this->dbMarzban->query("SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = '$triggerName'");
@@ -645,42 +645,48 @@ class PanelManager {
                     }
                 }
             }
-    
+
             $requiredAdminIds = array_filter($admins, function($admin) {
                 return $admin['calculate_volume'] === 'created_traffic';
             });
-    
+
             $updatedAdminIds = [];
             foreach ($requiredAdminIds as $adminId => $admin) {
+                if (isset($admin['total_traffic']) && is_numeric($admin['total_traffic']) && $admin['total_traffic'] > 0) {
                 $updatedAdminIds[$adminId] = $admin;
+                } else {
+                    file_put_contents('logs.txt', date('Y-m-d H:i:s') . " - Invalid total_traffic for admin_id $adminId: " . var_export($admin['total_traffic'], true) . "\n", FILE_APPEND);
+                }
             }
-    
+
             if (empty($updatedAdminIds)) {
                 $this->dbMarzban->query("DROP TRIGGER IF EXISTS `$triggerName`");
+                file_put_contents('logs.txt', date('Y-m-d H:i:s') . " - No valid admins for trigger $triggerName, dropping trigger.\n", FILE_APPEND);
             } else {
                 $caseStatements = '';
                 foreach ($updatedAdminIds as $adminId => $admin) {
-                    $maxLimit = $admin['total_traffic'];
+                    $maxLimit = (int)$admin['total_traffic'];
                     $caseStatements .= "WHEN $adminId THEN SET max_limit = $maxLimit;\n";
                 }
-    
+
+            if ($actionType === 'INSERT') {
                 $triggerBody = "
                 CREATE TRIGGER `$triggerName` BEFORE $actionType ON `users`
                 FOR EACH ROW
                 BEGIN
                     DECLARE total_data_limit BIGINT DEFAULT 0;
                     DECLARE max_limit BIGINT DEFAULT 0;
-    
+
                     CASE NEW.admin_id
                         $caseStatements
                         ELSE SET max_limit = 0;
                     END CASE;
-    
+
                     IF max_limit > 0 THEN
                         SELECT COALESCE(SUM(data_limit), 0) INTO total_data_limit
                         FROM users
                         WHERE admin_id = NEW.admin_id;
-    
+
                         IF (total_data_limit + NEW.data_limit) > max_limit THEN
                             SIGNAL SQLSTATE '45000'
                             SET MESSAGE_TEXT = 'Admin has exceeded the total data limit.';
@@ -688,17 +694,54 @@ class PanelManager {
                     END IF;
                 END;
                 ";
-    
+                } else { // UPDATE
+                    $triggerBody = "
+                    CREATE TRIGGER `$triggerName` BEFORE $actionType ON `users`
+                    FOR EACH ROW
+                    BEGIN
+                        DECLARE total_data_limit BIGINT DEFAULT 0;
+                        DECLARE max_limit BIGINT DEFAULT 0;
+
+                        CASE NEW.admin_id
+                            $caseStatements
+                            ELSE SET max_limit = 0;
+                        END CASE;
+
+                        IF max_limit > 0 THEN
+                            IF (NEW.used_traffic <=> OLD.used_traffic AND 
+                                NEW.sub_updated_at <=> OLD.sub_updated_at AND 
+                                NEW.last_status_change <=> OLD.last_status_change AND 
+                                NEW.sub_last_user_agent <=> OLD.sub_last_user_agent AND 
+                                NEW.online_at <=> OLD.online_at AND 
+                                NEW.edit_at <=> OLD.edit_at AND 
+                                NEW.data_limit = OLD.data_limit AND 
+                                NEW.admin_id = OLD.admin_id) THEN
+                                -- Allow update if only specified columns are changed
+                                SET max_limit = 0;
+                            ELSE
+                                SELECT COALESCE(SUM(data_limit), 0) INTO total_data_limit
+                                FROM users
+                                WHERE admin_id = NEW.admin_id;
+
+                                IF (total_data_limit + NEW.data_limit - OLD.data_limit) > max_limit THEN
+                                    SIGNAL SQLSTATE '45000'
+                                    SET MESSAGE_TEXT = 'Admin has exceeded the total data limit.';
+                                END IF;
+                            END IF;
+                        END IF;
+                    END;
+                    ";
+
                 $this->dbMarzban->query("DROP TRIGGER IF EXISTS `$triggerName`");
-                $this->dbMarzban->query($triggerBody);
-    
+                $result = $this->dbMarzban->query($triggerBody);
+
                 if ($this->dbMarzban->error) {
                     file_put_contents('logs.txt', date('Y-m-d H:i:s') . " - SQL Error: " . $this->dbMarzban->error . " - Query: $triggerBody\n", FILE_APPEND);
                 }
             }
         }
     }
-
+}
     private function manageCreatedTrafficTrigger($adminId, $insertTriggerName = 'user_creation_traffic', $updateTriggerName = 'user_update_traffic') {
         $stmtSettings = $this->dbBot->prepare("SELECT calculate_volume, total_traffic FROM admin_settings WHERE admin_id = ?");
         $stmtSettings->bind_param("i", $adminId);
